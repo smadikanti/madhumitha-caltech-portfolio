@@ -1,0 +1,21 @@
+# Stellar Data Pipeline Configuration
+# Copy to config.yaml and edit for your environment.
+
+database:
+  host: localhost
+  port: 5432
+  name: stellar_pipeline
+  user: pipeline_user
+  password: changeme       # Or use ${DB_PASSWORD} to read from env
+
+api:
+  base_url: https://exoplanetarchive.ipac.caltech.edu/TAP/sync
+  timeout: 60              # Seconds before HTTP request times out
+  max_retries: 3           # Total retry attempts on transient failures
+  backoff_base: 2.0        # Base for exponential backoff (seconds)
+  backoff_max: 60.0        # Maximum backoff delay (seconds)
+
+pipeline:
+  batch_size: 500          # Records per database INSERT batch
+  log_file: pipeline.log   # Structured JSON log output
+  log_level: INFO          # DEBUG, INFO, WARNING, ERROR, CRITICAL
