@@ -1,0 +1,117 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      image-tag:
+        description: "Docker image tag to deploy (default: latest from main)"
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.resolve.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: resolve
+        name: Resolve image tag
+        run: |
+          TAG="${{ github.event.inputs.image-tag }}"
+          if [ -z "$TAG" ]; then
+            TAG="${{ github.sha }}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Deploying image tag: $TAG"
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event.inputs.environment == 'dev'
+    environment:
+      name: dev
+      url: https://dev.example.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to dev
+        env:
+          IMAGE_TAG: ${{ needs.validate.outputs.image-tag }}
+        run: |
+          echo "Deploying ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${IMAGE_TAG} to dev"
+          bash scripts/deploy.sh dev "${IMAGE_TAG}"
+
+      - name: Health check
+        run: bash scripts/health-check.sh "https://dev.example.com"
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event.inputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging.example.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        env:
+          IMAGE_TAG: ${{ needs.validate.outputs.image-tag }}
+        run: |
+          echo "Deploying ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${IMAGE_TAG} to staging"
+          bash scripts/deploy.sh staging "${IMAGE_TAG}"
+
+      - name: Health check
+        run: bash scripts/health-check.sh "https://staging.example.com"
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against staging..."
+          curl -sf https://staging.example.com/health | python -m json.tool
+
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event.inputs.environment == 'prod'
+    environment:
+      name: production
+      url: https://app.example.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to production (blue-green)
+        env:
+          IMAGE_TAG: ${{ needs.validate.outputs.image-tag }}
+        run: |
+          echo "Deploying ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${IMAGE_TAG} to production"
+          bash scripts/deploy.sh prod "${IMAGE_TAG}"
+
+      - name: Health check
+        run: bash scripts/health-check.sh "https://app.example.com"
+
+      - name: Verify rollback readiness
+        run: |
+          echo "Previous version recorded for rollback"
+          bash scripts/rollback.sh --dry-run prod
