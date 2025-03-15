@@ -1,0 +1,38 @@
+metrics_server:
+  host: "0.0.0.0"
+  port: 9090
+  path: "/metrics"
+
+aggregator:
+  poll_interval_seconds: 2.0
+  window_seconds: 300
+
+alert_channels:
+  stdout: true
+  file_path: "alerts.jsonl"
+  # webhook_url: "https://hooks.slack.com/services/XXX/YYY/ZZZ"
+
+alert_rules:
+  - name: high_error_rate
+    metric: error_rate
+    operator: ">"
+    threshold: 0.05
+    window_seconds: 300
+    severity: critical
+    channels: ["stdout", "file"]
+
+  - name: low_throughput
+    metric: throughput
+    operator: "<"
+    threshold: 0.5
+    window_seconds: 300
+    severity: warning
+    channels: ["stdout"]
+
+  - name: excessive_errors
+    metric: error_count
+    operator: ">"
+    threshold: 50
+    window_seconds: 300
+    severity: critical
+    channels: ["stdout", "file", "webhook"]
