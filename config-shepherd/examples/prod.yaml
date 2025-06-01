@@ -1,0 +1,38 @@
+inherits: staging
+
+app:
+  log_level: WARNING
+
+database:
+  host: prod-db.internal
+  pool_size: 25
+  ssl: true
+
+cache:
+  backend: redis
+  host: prod-cache.internal
+  port: 6379
+  ttl_seconds: 600
+
+server:
+  workers: 16
+  cors_origins:
+    - "https://exoplanet-archive.caltech.edu"
+    - "https://exoplanetarchive.ipac.caltech.edu"
+
+software:
+  os_version: "Ubuntu 22.04"
+  python_version: "3.11.9"
+  packages:
+    fastapi: "0.109.2"
+    sqlalchemy: "2.0.27"
+    pydantic: "2.5.3"
+    uvicorn: "0.27.1"
+    astropy: "6.0.1"
+    numpy: "1.26.4"
+  system_packages:
+    postgresql: "15.6"
+    redis: "7.2.4"
+
+features:
+  enable_bulk_download: false

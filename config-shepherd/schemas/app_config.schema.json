@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Application Configuration",
+  "description": "Schema for config-shepherd managed environment configurations",
+  "type": "object",
+  "properties": {
+    "app": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "debug": { "type": "boolean" },
+        "log_level": {
+          "type": "string",
+          "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        }
+      },
+      "required": ["name", "version"]
+    },
+    "database": {
+      "type": "object",
+      "properties": {
+        "host": { "type": "string" },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "name": { "type": "string" },
+        "pool_size": { "type": "integer", "minimum": 1 },
+        "ssl": { "type": "boolean" }
+      },
+      "required": ["host", "port", "name"]
+    },
+    "cache": {
+      "type": "object",
+      "properties": {
+        "backend": {
+          "type": "string",
+          "enum": ["redis", "memcached", "local"]
+        },
+        "host": { "type": "string" },
+        "port": { "type": "integer" },
+        "ttl_seconds": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "server": {
+      "type": "object",
+      "properties": {
+        "host": { "type": "string" },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "workers": { "type": "integer", "minimum": 1 },
+        "cors_origins": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "software": {
+      "type": "object",
+      "description": "Software library and OS version inventory",
+      "properties": {
+        "os_version": { "type": "string" },
+        "python_version": { "type": "string" },
+        "packages": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "system_packages": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": { "type": "boolean" }
+    }
+  },
+  "required": ["app"]
+}

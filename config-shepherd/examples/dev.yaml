@@ -1,0 +1,22 @@
+inherits: base
+
+app:
+  debug: true
+  log_level: DEBUG
+
+database:
+  host: localhost
+  pool_size: 2
+
+cache:
+  backend: local
+  ttl_seconds: 10
+
+server:
+  workers: 1
+  cors_origins:
+    - "http://localhost:3000"
+    - "http://localhost:5173"
+
+features:
+  enable_bulk_download: true

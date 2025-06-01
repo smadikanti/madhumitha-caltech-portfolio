@@ -1,0 +1,42 @@
+app:
+  name: exoplanet-archive
+  version: "2.4.0"
+  debug: false
+  log_level: INFO
+
+database:
+  host: localhost
+  port: 5432
+  name: exoplanet_db
+  pool_size: 5
+  ssl: false
+
+cache:
+  backend: local
+  ttl_seconds: 300
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 2
+  cors_origins:
+    - "http://localhost:3000"
+
+software:
+  os_version: "Ubuntu 22.04"
+  python_version: "3.11.7"
+  packages:
+    fastapi: "0.109.0"
+    sqlalchemy: "2.0.25"
+    pydantic: "2.5.3"
+    uvicorn: "0.27.0"
+    astropy: "6.0.0"
+    numpy: "1.26.3"
+  system_packages:
+    postgresql: "15.5"
+    redis: "7.2.4"
+
+features:
+  enable_search: true
+  enable_export: true
+  enable_bulk_download: false
