@@ -1,0 +1,66 @@
+thresholds:
+  cpu:
+    warning: 80
+    critical: 95
+  memory:
+    warning: 80
+    critical: 95
+  disk:
+    warning: 80
+    critical: 95
+  swap:
+    warning: 50
+    critical: 80
+
+network:
+  ping_targets:
+    - 8.8.8.8
+    - 1.1.1.1
+  dns_targets:
+    - google.com
+    - github.com
+  port_checks:
+    - host: localhost
+      port: 80
+    - host: localhost
+      port: 443
+
+processes:
+  critical:
+    - sshd
+    - cron
+
+docker:
+  enabled: true
+
+postgres:
+  host: localhost
+  port: 5432
+  user: postgres
+  dbname: postgres
+  max_replication_lag_bytes: 1048576
+  max_connections_warning: 80
+
+webserver:
+  endpoints:
+    - url: http://localhost:8080/health
+      expected_status: 200
+      timeout: 5
+
+alerting:
+  webhooks:
+    - url: https://hooks.slack.com/services/PLACEHOLDER
+      on:
+        - CRITICAL
+    - url: https://hooks.example.com/alerts
+      on:
+        - WARNING
+        - CRITICAL
+
+reports:
+  output_dir: ./reports
+  retain_days: 30
+
+cron:
+  interval_minutes: 5
+  output_dir: /var/log/health-reports

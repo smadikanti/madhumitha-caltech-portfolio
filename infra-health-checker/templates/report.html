@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health Report — {{ report.hostname }}</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --border: #334155;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --ok: #22c55e;
+    --warn: #eab308;
+    --crit: #ef4444;
+    --err: #a855f7;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 { font-size: 1.5rem; font-weight: 600; }
+  header .meta { text-align: right; color: var(--text-muted); font-size: 0.875rem; }
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .summary-card .number { font-size: 2rem; font-weight: 700; }
+  .summary-card .label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
+  .summary-card.overall { border-width: 2px; }
+
+  .checks-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+  }
+  .checks-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border-bottom: 2px solid var(--border);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+  .checks-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .checks-table tr:hover { background: rgba(255,255,255,0.03); }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .status-OK       { background: rgba(34,197,94,0.15); color: var(--ok); }
+  .status-WARNING   { background: rgba(234,179,8,0.15); color: var(--warn); }
+  .status-CRITICAL  { background: rgba(239,68,68,0.15); color: var(--crit); }
+  .status-ERROR     { background: rgba(168,85,247,0.15); color: var(--err); }
+
+  .details-toggle {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.75rem;
+  }
+  .details-toggle:hover { background: var(--surface); color: var(--text); }
+
+  .details-block {
+    display: none;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--text-muted);
+  }
+
+  footer {
+    text-align: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Infrastructure Health Report</h1>
+    <div class="meta">
+      <div><strong>{{ report.hostname }}</strong></div>
+      <div>{{ report.generated_at }}</div>
+    </div>
+  </header>
+
+  <section class="summary">
+    <div class="summary-card overall" style="border-color: {{ report.overall_status.value | status_color }}">
+      <div class="number" style="color: {{ report.overall_status.value | status_color }}">{{ report.overall_status.value }}</div>
+      <div class="label">Overall</div>
+    </div>
+    <div class="summary-card">
+      <div class="number" style="color: var(--ok)">{{ report.ok_count }}</div>
+      <div class="label">OK</div>
+    </div>
+    <div class="summary-card">
+      <div class="number" style="color: var(--warn)">{{ report.warning_count }}</div>
+      <div class="label">Warning</div>
+    </div>
+    <div class="summary-card">
+      <div class="number" style="color: var(--crit)">{{ report.critical_count }}</div>
+      <div class="label">Critical</div>
+    </div>
+    <div class="summary-card">
+      <div class="number" style="color: var(--err)">{{ report.error_count }}</div>
+      <div class="label">Error</div>
+    </div>
+  </section>
+
+  <table class="checks-table">
+    <thead>
+      <tr>
+        <th>Check</th>
+        <th>Status</th>
+        <th>Value</th>
+        <th>Threshold</th>
+        <th>Message</th>
+        <th>Duration</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in report.results %}
+      <tr>
+        <td><strong>{{ r.check }}</strong></td>
+        <td><span class="status-badge status-{{ r.status.value }}">{{ r.status.value }}</span></td>
+        <td>{{ r.value }}</td>
+        <td>{{ r.threshold }}</td>
+        <td>{{ r.message }}</td>
+        <td>{% if r.duration_ms %}{{ "%.0f" | format(r.duration_ms) }}ms{% else %}—{% endif %}</td>
+        <td>
+          {% if r.details %}
+          <button class="details-toggle" onclick="toggleDetails('details-{{ r.check }}')">details</button>
+          <div class="details-block" id="details-{{ r.check }}">{{ json_dumps(r.details) }}</div>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <footer>
+    Generated by <strong>infra-health-checker</strong>
+  </footer>
+</div>
+
+<script>
+function toggleDetails(id) {
+  var el = document.getElementById(id);
+  el.style.display = el.style.display === 'block' ? 'none' : 'block';
+}
+</script>
+</body>
+</html>
